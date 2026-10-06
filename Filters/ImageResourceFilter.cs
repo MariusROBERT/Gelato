@@ -72,7 +72,8 @@ public sealed class ImageResourceFilter(
         }
 
         // Only handle cached search results — library items go through ProcessImage
-        var url = manager.GetStremioMeta(guid)?.Poster;
+        var meta = manager.GetStremioMeta(guid);
+        var url = meta?.Poster ?? meta?.Thumbnail;
         if (url is null)
         {
             await NotFoundOrNext(ctx, next, guid);

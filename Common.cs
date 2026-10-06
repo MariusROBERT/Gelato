@@ -325,6 +325,23 @@ public static class ActionContextExtensions
         "UpdateItemUserDataLegacy",
     };
 
+    // Also recognize inverse mutations for deferred import without changing the legacy eager-mode
+    // set of actions that can materialize a search result.
+    private static readonly HashSet<string> PersistentStateActionNames = new(
+        UserDataActionNames,
+        StringComparer.OrdinalIgnoreCase
+    )
+    {
+        "MarkUnplayedItem",
+        "MarkUnplayedItemLegacy",
+        "UnmarkPlayedItem",
+        "UnmarkPlayedItemLegacy",
+        "UnmarkFavoriteItem",
+        "UnmarkFavoriteItemLegacy",
+        "DeleteUserItemRating",
+        "DeleteUserItemRatingLegacy",
+    };
+
     // The ones that reach a series' episodes: played is stored per episode and a folder counts as
     // played when all of them are, so these need the tree to be complete before they run. A
     // favourite or a rating is kept on the series itself and does not wait for anything.
@@ -334,6 +351,10 @@ public static class ActionContextExtensions
     {
         "MarkPlayedItem",
         "MarkPlayedItemLegacy",
+        "MarkUnplayedItem",
+        "MarkUnplayedItemLegacy",
+        "UnmarkPlayedItem",
+        "UnmarkPlayedItemLegacy",
         "UpdateItemUserData",
         "UpdateItemUserDataLegacy",
     };
@@ -455,6 +476,9 @@ public static class ActionContextExtensions
     public static bool IsPlaybackInfoAction(this HttpContext? ctx) =>
         ctx?.GetActionName() is { } actionName && PlaybackInfoActionNames.Contains(actionName);
 
+    public static bool IsUserDataAction(this ActionExecutingContext ctx) =>
+        ctx.GetActionName() is { } actionName && PersistentStateActionNames.Contains(actionName);
+
     public static bool IsInsertableAction(this HttpContext ctx)
     {
         var actionName = ctx.GetActionName();
@@ -499,7 +523,8 @@ public static class ActionContextExtensions
             return null;
 
         if (!actionName.StartsWith("UpdateItemUserData", StringComparison.OrdinalIgnoreCase))
-            return true;
+            return !actionName.StartsWith("MarkUnplayed", StringComparison.OrdinalIgnoreCase)
+                && !actionName.StartsWith("UnmarkPlayed", StringComparison.OrdinalIgnoreCase);
 
         // The body is one of Jellyfin's API models, which a plugin does not reference.
         foreach (var argument in ctx.ActionArguments.Values)

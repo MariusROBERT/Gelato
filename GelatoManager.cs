@@ -117,6 +117,48 @@ public sealed class GelatoManager(
         memoryCache.Remove($"meta:{guid}");
     }
 
+    public void SaveTransientEpisode(Guid episodeId, StremioMeta episode, StremioMeta series)
+    {
+        memoryCache.Set($"meta:{episodeId}", episode, TimeSpan.FromMinutes(360));
+        SaveParentSeriesMeta(episodeId, series);
+        memoryCache.Set($"transient-child:{episodeId}", "episode", TimeSpan.FromMinutes(360));
+    }
+
+    public void SaveTransientSeason(Guid seasonId, StremioMeta series)
+    {
+        SaveParentSeriesMeta(seasonId, series);
+        memoryCache.Set($"transient-child:{seasonId}", "season", TimeSpan.FromMinutes(360));
+    }
+
+    public bool IsTransientSeason(Guid childId) =>
+        memoryCache.TryGetValue($"transient-child:{childId}", out string? kind) && kind == "season";
+
+    public bool IsTransientEpisode(Guid childId) =>
+        memoryCache.TryGetValue($"transient-child:{childId}", out string? kind) && kind == "episode";
+
+    public void SaveParentSeriesMeta(Guid childId, StremioMeta series) =>
+        memoryCache.Set($"series-meta:{childId}", series, TimeSpan.FromMinutes(360));
+
+    public StremioMeta? GetParentSeriesMeta(Guid childId) =>
+        memoryCache.TryGetValue($"series-meta:{childId}", out StremioMeta? meta) ? meta : null;
+
+    public void SaveResolvedPlaybackStreams(Guid itemId, Guid userId, List<StremioStream> streams) =>
+        memoryCache.Set(
+            $"playback-streams:{itemId:N}:{userId:N}",
+            streams,
+            TimeSpan.FromMinutes(10)
+        );
+
+    private List<StremioStream>? TakeResolvedPlaybackStreams(Guid itemId, Guid userId)
+    {
+        var key = $"playback-streams:{itemId:N}:{userId:N}";
+        if (!memoryCache.TryGetValue(key, out List<StremioStream>? streams))
+            return null;
+
+        memoryCache.Remove(key);
+        return streams;
+    }
+
     /// <summary>
     /// Remembers which library item a search result became. A client that opened the result keeps
     /// its id in the page URL, and asks for the page, images, seasons, episodes and playback with
@@ -686,7 +728,8 @@ public sealed class GelatoManager(
         // Next to the addon's request: RemuxDB answers in well under a second, and gives up after
         // a few.
         var remuxDbLookup = remuxDb.LookupAsync(uri.ExternalId, ct);
-        var streams = await stremio.GetStreamsAsync(uri).ConfigureAwait(false);
+        var streams = TakeResolvedPlaybackStreams(item.Id, userId)
+            ?? await stremio.GetStreamsAsync(uri).ConfigureAwait(false);
 
         // Filter valid streams
         var acceptable = streams
@@ -1376,7 +1419,7 @@ public sealed class GelatoManager(
     /// takes the season's episodes and their watch state with it. A gelato:// path makes the
     /// season remote, which the scan leaves alone, the way it leaves the episodes below it alone.
     /// </remarks>
-    private static string VirtualSeasonPath(Series series, int seasonIndex) =>
+    public static string VirtualSeasonPath(Series series, int seasonIndex) =>
         !series.IsFileProtocol && !string.IsNullOrEmpty(series.Path)
             ? $"{series.Path}:{seasonIndex}"
             : $"gelato://season/{series.Id:N}:{seasonIndex}";
