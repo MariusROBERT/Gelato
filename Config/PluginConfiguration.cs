@@ -23,6 +23,7 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool CreateCollections { get; set; } = false;
     public int MaxCollectionItems { get; set; } = 100;
     public bool DisableSearch { get; set; } = false;
+    public bool ImportItemsOnlyWhenPlayed { get; set; } = false;
     public bool EnableJavaScriptInjection { get; set; } = false;
     public bool LazyImages { get; set; } = false;
     public List<CatalogConfig> Catalogs { get; set; } = [];
@@ -156,6 +157,7 @@ public class UserConfig
             MoviePath = MoviePath,
             SeriesPath = SeriesPath,
             DisableSearch = DisableSearch,
+            ImportItemsOnlyWhenPlayed = baseConfig.ImportItemsOnlyWhenPlayed,
 
             // All other fields from base config
             StreamTTL = baseConfig.StreamTTL,

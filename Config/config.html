@@ -107,6 +107,17 @@
               </label>
             </div>
 
+            <div class="checkboxContainer checkboxContainer-withDescription">
+              <label>
+                <input is="emby-checkbox" type="checkbox" id="chkImportItemsOnlyWhenPlayed" />
+                <span>Import items only when played</span>
+              </label>
+              <div class="fieldDescription">
+                Keep search results transient while browsing. Playing a stream or changing watched,
+                favorite, or rating status imports the item; playing an episode imports its show.
+              </div>
+            </div>
+
             <div class="checkboxContainer checkboxContainer-withDescription" style="margin-bottom: 0.5em;">
               <label>
                 <input is="emby-checkbox" type="checkbox" id="chkFilterUnreleased" />
@@ -318,6 +329,7 @@
         const chkEnableMixed = page.querySelector('#chkEnableMixed');
         const chkExtendLocalSeriesTrees = page.querySelector('#chkExtendLocalSeriesTrees');
         const chkDisableSearch = page.querySelector('#chkDisableSearch');
+        const chkImportItemsOnlyWhenPlayed = page.querySelector('#chkImportItemsOnlyWhenPlayed');
         const chkFilterUnreleased = page.querySelector('#chkFilterUnreleased');
         const txtBufferDays = page.querySelector('#txtBufferDays');
         const txtFFmpegAnalyzeDuration = page.querySelector('#txtFFmpegAnalyzeDuration');
@@ -615,6 +627,7 @@
             if (chkEnableMixed) chkEnableMixed.checked = cfg.EnableMixed ?? true;
             if (chkExtendLocalSeriesTrees) chkExtendLocalSeriesTrees.checked = cfg.ExtendLocalSeriesTrees ?? false;
             if (chkDisableSearch) chkDisableSearch.checked = cfg.DisableSearch || false;
+            if (chkImportItemsOnlyWhenPlayed) chkImportItemsOnlyWhenPlayed.checked = cfg.ImportItemsOnlyWhenPlayed || false;
             if (chkFilterUnreleased) chkFilterUnreleased.checked = cfg.FilterUnreleased || false;
             if (txtBufferDays) txtBufferDays.value = cfg.FilterUnreleasedBufferDays ?? 0;
             if (txtFFmpegAnalyzeDuration) txtFFmpegAnalyzeDuration.value = cfg.FFmpegAnalyzeDuration || "5M";
@@ -652,6 +665,7 @@
             cfg.ExtendLocalSeriesTrees = chkExtendLocalSeriesTrees.checked;
 
             cfg.DisableSearch = chkDisableSearch.checked;
+            cfg.ImportItemsOnlyWhenPlayed = chkImportItemsOnlyWhenPlayed.checked;
             cfg.FilterUnreleased = chkFilterUnreleased.checked;
             cfg.FilterUnreleasedBufferDays = txtBufferDays.value !== '' ? parseInt(txtBufferDays.value) : 0;
 
